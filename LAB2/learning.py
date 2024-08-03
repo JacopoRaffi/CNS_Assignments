@@ -18,7 +18,7 @@ def train(rule:ABCRule, data:np.ndarray,
           threshold:float = 1e-8, epochs:int = 1000) -> tuple:
    
     norm_distance = np.inf
-    w_history = [rule.w]
+    w_history = [rule.w.copy()]
     norm_history = []
     epoch = 0
 
