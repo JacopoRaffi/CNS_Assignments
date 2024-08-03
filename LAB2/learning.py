@@ -47,3 +47,13 @@ class HebbRule(ABCRule):
     def update(self, u:np.ndarray, v:np.ndarray) -> None:
         delta_w = self.eta * v * u # compute the delta W
         self.w += delta_w # update the weights
+
+
+class OjaRule(ABCRule):
+    def __init__(self, input_size:int, eta:float = 1e-4, alpha:float = 2) -> None:
+        super().__init__(input_size, eta)
+        self.alpha = alpha
+
+    def update(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
+        delta_w = self.eta * ((v * u) - self.alpha * (np.power(v, 2) * self.w))
+        self.w += delta_w
