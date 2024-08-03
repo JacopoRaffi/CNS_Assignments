@@ -1,7 +1,7 @@
 import numpy as np
 
 class ABCRule:
-    def __init__(self, input_size:int, eta:float = 1e-4) -> None:
+    def __init__(self, input_size:int, eta:float = 1e-4):
         RANDOM_STATE = 42
         rand_gen = np.random.default_rng(RANDOM_STATE)
         self.w = rand_gen.uniform(-1, 1, input_size) # input is 2-dimension
@@ -41,19 +41,30 @@ def train(rule:ABCRule, data:np.ndarray,
 
 # --------------------------------- Implementation of different Rules --------------------------------- #
 class HebbRule(ABCRule):
-    def __init__(self, input_size:int, eta:float = 1e-4) -> None:
+    def __init__(self, input_size:int, eta:float = 1e-4):
         super().__init__(input_size, eta)
 
-    def update(self, u:np.ndarray, v:np.ndarray) -> None:
+    def update(self, u:np.ndarray, v:np.ndarray) :
         delta_w = self.eta * v * u # compute the delta W
         self.w += delta_w # update the weights
 
 
 class OjaRule(ABCRule):
-    def __init__(self, input_size:int, eta:float = 1e-4, alpha:float = 2) -> None:
+    def __init__(self, input_size:int, eta:float = 1e-4, alpha:float = 2):
         super().__init__(input_size, eta)
         self.alpha = alpha
 
     def update(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
         delta_w = self.eta * ((v * u) - self.alpha * (np.power(v, 2) * self.w))
+        self.w += delta_w
+
+class SNRule(ABCRule):
+    def __init__(self, input_size:int, eta:float = 1e-4):
+        super().__init__(input_size, eta)
+
+    def update(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
+        n = np.ones_like(u)
+        n_u = len(u)
+
+        delta_w = self.eta * (v * (u - (np.inner(u, n)) * n / n_u))
         self.w += delta_w
