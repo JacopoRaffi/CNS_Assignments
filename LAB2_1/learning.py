@@ -15,7 +15,7 @@ class ABCRule:
 
 
 def train(rule:ABCRule, data:np.ndarray, 
-          threshold:float = 1e-8, epochs:int = 1000) -> tuple:
+          threshold:float = 1e-8, epochs:int = 100) -> tuple:
    
     norm_distance = np.inf
     w_history = [rule.w.copy()]
@@ -36,6 +36,7 @@ def train(rule:ABCRule, data:np.ndarray,
         norm_distance = np.linalg.norm(w_old - rule.w)
         epoch += 1
 
+    print(epoch)
     return w_history, norm_history
 
 
