@@ -43,5 +43,17 @@ def plot_images(original_image, noisy_image, retrieved_image, noise):
     axs[2].imshow(retrieved_image, cmap='gray')
     axs[2].set_title('Retrieved Image')
 
-def plot_history(energy_history:list, overlap_history:list):
-    pass
+def plot_history(energy_history:list, overlap_history:list, noise:int):
+    fig, axs = plt.subplots(1, 2, figsize=(15, 5))
+
+    fig.suptitle(f'History of Energy and Overlap - Noise: {noise}')
+
+    axs[0].plot(energy_history)
+    axs[0].set_title('Energy History')
+    axs[0].set_xlabel('Updates')
+    axs[0].set_ylabel('Energy')
+
+    axs[1].plot(overlap_history, color='g')
+    axs[1].set_title('Overlap History')
+    axs[1].set_xlabel('Updates')
+    axs[1].set_ylabel('Overlap')
