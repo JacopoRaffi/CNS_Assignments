@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def distort_image(im, prop):
     if prop < 0 or prop > 1:
@@ -18,3 +19,9 @@ def distort_image(im, prop):
     
     # Return of the image to its original format after distortion.
     return im_flat.reshape(im.shape)
+
+def reshape_vector_to_image(csv_filename):
+    p_df = pd.read_csv(csv_filename, header=None)
+    p = p_df.to_numpy().reshape(-1) # reshape to have a 1D array
+    
+    return p.reshape(32, 32).T # reshape to have a 32x32 image
