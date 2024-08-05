@@ -18,12 +18,12 @@ class HopfieldNetwork:
         return (W / self.size)
 
     def __energy(self, state:np.ndarray) -> float:
-        return -0.5 * (np.dot(self.W, state) * state)
+        return -0.5 * (np.dot(np.dot(self.W, state), state))
 
     def __overlap(self, state:np.ndarray, true_pattern:np.ndarray) -> float:
         return (1/self.size) * np.dot(state, true_pattern)
 
-    def __call__(self, input:np.ndarray, steps:int = 4, bias = 0.5, 
+    def __call__(self, input:np.ndarray, steps:int = 10, bias = 0.6, 
                  history:bool = False, true_pattern:np.ndarray = None) -> np.ndarray:
         state = input.copy()
 
@@ -41,9 +41,9 @@ class HopfieldNetwork:
             for neuron in neurons_order:
                 state[neuron] = np.sign(np.dot(self.W[neuron], state) + bias)
 
-            if history:
-                energy_history.append(self.__energy(state))
-                overlap_history.append(self.__overlap(state, true_pattern))
+                if history:
+                    energy_history.append(self.__energy(state))
+                    overlap_history.append(self.__overlap(state, true_pattern))
             
             step += 1
             not_converged = np.array_equal(state, previous_state)
