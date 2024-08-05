@@ -39,13 +39,15 @@ class HopfieldNetwork:
             previous_state = state.copy()
 
             for neuron in neurons_order:
-                state[neuron] = np.sign(np.dot(self.W[neuron], state) + bias)
+                output = np.dot(self.W[neuron], state) + bias
+                state[neuron] = np.where(output > 0, 1, -1)
 
                 if history:
                     energy_history.append(self.__energy(state))
                     overlap_history.append(self.__overlap(state, true_pattern))
             
             step += 1
-            not_converged = np.array_equal(state, previous_state)
+            not_converged = not np.array_equal(state, previous_state)
         
+        print(step)
         return state, energy_history, overlap_history
