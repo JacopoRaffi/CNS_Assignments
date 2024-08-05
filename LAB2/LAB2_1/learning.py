@@ -27,7 +27,7 @@ class ABCRule:
         self.w = rand_gen.uniform(-1, 1, input_size) # input is 2-dimension
         self.lr = lr
 
-    def predict(self, u:np.ndarray) -> np.ndarray:
+    def __call__(self, u:np.ndarray) -> np.ndarray:
         '''
         Compute the output of the neuron
 
@@ -89,7 +89,7 @@ def train(rule:ABCRule, data:np.ndarray,
         w_old = rule.w.copy() # copy the old weights to compare with the new using the norm 2
 
         for u in data:
-            v = rule.predict(u) 
+            v = rule(u) 
             rule.update(u, v) 
 
             w_history.append(rule.w.copy())

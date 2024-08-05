@@ -57,7 +57,7 @@ def weights_plot(w_history:list, norm_history:list):
     axs[1].set_title('Weight 2 Evolution')
     axs[1].set_xlabel('Epochs')
 
-    axs[2].plot(norm_history, 2)
+    axs[2].plot(norm_history)
     axs[2].set_title('Weights Norm Evolution')
     axs[2].set_xlabel('Epochs')
 
