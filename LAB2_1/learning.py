@@ -15,7 +15,7 @@ class ABCRule:
 
 
 def train(rule:ABCRule, data:np.ndarray, 
-          threshold:float = 1e-8, epochs:int = 100) -> tuple:
+          threshold:float = 1e-5, epochs:int = 100) -> tuple:
    
     norm_distance = np.inf
     w_history = [rule.w.copy()]
@@ -36,7 +36,6 @@ def train(rule:ABCRule, data:np.ndarray,
         norm_distance = np.linalg.norm(w_old - rule.w)
         epoch += 1
 
-    print(epoch)
     return w_history, norm_history
 
 
@@ -68,4 +67,13 @@ class SNRule(ABCRule):
         n_u = len(u)
 
         delta_w = self.eta * (v * (u - (np.inner(u, n)) * n / n_u))
+        self.w += delta_w
+
+class CovarianceRule(ABCRule):
+    def __init__(self, input_size:int, eta:float = 1e-4, theta:float = 1):
+        super().__init__(input_size, eta)
+        self.theta = theta
+
+    def update(self, u: np.ndarray, v: np.ndarray) -> np.ndarray:
+        delta_w = self.eta * (v * (u - self.theta))
         self.w += delta_w
