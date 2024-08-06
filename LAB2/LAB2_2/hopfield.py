@@ -106,6 +106,26 @@ class HopfieldNetwork:
         self.W += (np.outer(pattern, pattern)) / self.size # incremental update of the weights
 
     def __call__(self, input:np.ndarray, steps:int = 10, bias = 0.6, true_pattern:np.ndarray = None) -> tuple:
+        '''
+        Compute the output of the network
+
+        Parameters:
+        -----------
+        input: np.ndarray
+            Input pattern to be processed
+        steps: int
+            Max number of steps to perform
+        bias: float or numpy array
+            Bias of the network (if bias is a float it will be applied the same bias to all neurons)
+        true_pattern: np.ndarray
+            Target pattern (used to compute the overlap)
+        
+        Returns:
+        --------
+        return: tuple
+            Tuple containing the output of the network, the energy history and the overlap history
+        
+        '''
         
         state = input.copy()
         energy_history, overlap_history = [], []
@@ -118,7 +138,7 @@ class HopfieldNetwork:
 
             for neuron in neurons_order:
                 output = np.dot(self.W[neuron], state) + bias
-                state[neuron] = np.where(output > 0, 1, -1)
+                state[neuron] = np.where(output > 0, 1, -1) # apply the 'sign' function
 
                 energy_history.append(self.__energy(state))
                 overlap_history.append(self.__overlap(state, true_pattern))
