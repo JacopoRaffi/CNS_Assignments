@@ -49,5 +49,4 @@ class HopfieldNetwork:
             step += 1
             not_converged = not np.array_equal(state, previous_state)
         
-        print(step)
         return state, energy_history, overlap_history
