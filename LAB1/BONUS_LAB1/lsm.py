@@ -52,14 +52,3 @@ class LSM:
         states = self.__compute_states(input)
 
         return (states @ self.Wout)
-    
-
-if __name__ == "__main__":
-    lsm = LSM(800, 200, 0.1, 0.5, 0.1, 0.5)
-
-    input_data = np.random.rand(10000)  # Replace with your input data
-    lsm.fit(input_data, input_data) 
-
-    i = lsm(input_data)
-    print(i.shape)
-
