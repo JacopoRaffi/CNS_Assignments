@@ -47,12 +47,6 @@ class TDNN(nn.Module):
         x: torch.Tensor
             The output tensor of shape (batch_size, output_size)
         '''
-
-        # Pad the input if it is smaller than the window size
-        if  x.shape[1] < self.window_size:
-            pad_size = self.window_size - x.shape[1]
-            x = F.pad(x, (0, pad_size))
-
         x = self.hidden_layer(x)
         x = F.tanh(x)
         x = self.output_layer(x)
