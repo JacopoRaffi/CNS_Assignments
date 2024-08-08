@@ -22,5 +22,7 @@ def grid_search(hyperparameters:dict, train_X:np.ndarray, train_Y:np.ndarray, va
         if mae < best_MAE:
             best_MAE = mae
             best_config = config.copy()
+            y_train_hat = lsm(train_X)
+            training_MAE = MAE(train_Y, y_train_hat)
     
-    return best_config, best_MAE
+    return best_config, best_MAE, training_MAE
