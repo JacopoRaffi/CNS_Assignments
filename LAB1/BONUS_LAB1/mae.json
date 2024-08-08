@@ -1,0 +1,14 @@
+{
+ "best_hyperparameters_config": {
+  "Ni": 200,
+  "Ne": 400,
+  "win_e": 6,
+  "win_i": 2,
+  "w_e": 0.5,
+  "w_i": 1.1
+ },
+ "val_mae": 29.241369840864834,
+ "train_mae": 16.045355451789387,
+ "mae_test": 50.12919280792255,
+ "train_mae_after_retraining": 16.878300062155486
+}
