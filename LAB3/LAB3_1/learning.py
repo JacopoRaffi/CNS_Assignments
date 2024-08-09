@@ -1,3 +1,4 @@
+import itertools
 import torch
 import torch.utils.data as data
 import torch.nn.functional as F
@@ -73,7 +74,7 @@ class TDNNDataset(data.Dataset):
             return self.x[idx - self.window_size + 1:idx + 1], self.y[idx] # no need to apply padding
         
 
-def train_model(model, train_loader, val_loader, lr, weight_decay, epochs, verbose=True):
+def train_tdnn(model, train_loader, val_loader, lr, weight_decay, epochs, verbose=True):
     '''
     Train a given model
 
@@ -138,3 +139,32 @@ def train_model(model, train_loader, val_loader, lr, weight_decay, epochs, verbo
 
     return train_mse_history, val_mse_history
 
+class GridSearch:
+    '''
+    Implementation of a gridsearch for rnn and tdnn 
+
+    Attributes:
+    ----------
+    all_config: list
+        List of dict containing all possible configurations
+    '''
+    def __init__(self, hyperparameters:dict):
+        '''
+        Initialize the gridsearch
+
+        Parameters:
+        ----------
+        hyperparameters: dict
+            Dictionary containing hyperparameters to be tuned
+
+        Returns:
+        -------
+        return: -
+        '''
+        self.all_config = [dict(zip(hyperparameters.keys(), config)) for config in itertools.product(*hyperparameters.values())]
+
+    def tdnn_model_selection(self):
+        pass
+
+    def rnn_model_selection(self):
+        pass
