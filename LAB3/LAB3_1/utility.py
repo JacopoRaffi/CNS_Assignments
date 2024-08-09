@@ -18,11 +18,13 @@ def plot_loss(training_loss:list, test_loss:list, test:bool = False):
     return: -
     '''
     # change the label considering if it is the test loss history or the validation loss history
-    val_label = 'Test Loss' if test else 'Validation Loss'
+    val_label = 'Test MSE' if test else 'Validation MSE'
 
+    plt.figure(figsize=(12, 6))
+    plt.title(f'Training MSE: {round(training_loss[-1], 5)} - {val_label}: {round(test_loss[-1], 5)}')
     plt.plot(training_loss, label='Training Loss')
     plt.plot(test_loss, label=val_label)
     plt.xlabel('Epoch')
-    plt.ylabel('Loss')
+    plt.ylabel('Mean Squared Error (MSE)') 
     plt.legend()
     plt.show()
