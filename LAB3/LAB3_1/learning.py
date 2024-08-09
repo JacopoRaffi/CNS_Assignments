@@ -4,6 +4,8 @@ import torch.utils.data as data
 import torch.nn.functional as F
 import torch.optim as optim
 
+from models import *
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class TDNNDataset(data.Dataset):
@@ -101,7 +103,6 @@ def train_tdnn(model, train_loader, val_loader, lr, weight_decay, epochs, verbos
         A tuple containing the training and validation loss history
     '''
     loss = torch.nn.MSELoss()
-    mae_loss = torch.nn.L1Loss() # mean absolute error loss (WARNING: it is only used for evaluation...I personally visualize it better)
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     train_mse_history = [] # store the training loss history
@@ -129,13 +130,12 @@ def train_tdnn(model, train_loader, val_loader, lr, weight_decay, epochs, verbos
             for x, y in val_loader:
                 out = model(x)
                 val_mse = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
-                val_mae = mae_loss(out, y.unsqueeze(1))
         
         train_mse_history.append(train_mse)
         val_mse_history.append(val_mse.item())
 
         if verbose:
-            print(f'Epoch {epoch} - Train MSE: {train_mse} - Val MSE: {val_mse.item()} - Val MAE: {val_mae.item()}')
+            print(f'Epoch {epoch} - Train MSE: {train_mse} - Val MSE: {val_mse.item()}')
 
     return train_mse_history, val_mse_history
 
@@ -163,8 +163,41 @@ class GridSearch:
         '''
         self.all_config = [dict(zip(hyperparameters.keys(), config)) for config in itertools.product(*hyperparameters.values())]
 
-    def tdnn_model_selection(self):
-        pass
+    def tdnn_grid_search(self, train_X, train_Y, val_X, val_Y):
+        '''
+        Perform grid search to find the best hyperparameters for a TDNN
 
-    def rnn_model_selection(self):
+        Parameters:
+        ----------
+        train_X: torch.Tensor
+            Training input data
+        train_Y: torch.Tensor
+            Training target data
+        val_X: torch.Tensor
+            Validation input data
+        val_Y: torch.Tensor
+            Validation target data
+
+        Returns:
+        -------
+        return: dict
+            Return all the configurations with the corresponding training and validation MSE
+        '''
+        train_dataset = TDNNDataset(train_X, train_Y, window_size=config['window_size'])
+        val_dataset = TDNNDataset(val_X, val_Y, window_size=config['window_size'])
+        train_loader = data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=False)
+        val_loader = data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
+        
+        model_selection_history = {} # contains all the configurations with the corresponding training and validation MSE (useful for model selection)
+
+        for i, config in enumerate(self.all_config):
+            tdnn = TDNN(window_size=config['window_size'], hidden_size=config['hidden_size'], output_size=1)
+            train_h, val_h = train_tdnn(tdnn, train_loader, val_loader, 
+                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'])
+            
+            model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1]}
+        
+        return model_selection_history
+
+    def rnn_grid_search(self):
         pass
