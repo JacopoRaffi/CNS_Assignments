@@ -76,7 +76,7 @@ class TDNNDataset(data.Dataset):
             return self.x[idx - self.window_size + 1:idx + 1], self.y[idx] # no need to apply padding
         
 
-def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay:float, epochs:int, func:callable, verbose=True):
+def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay:float, epochs:int, verbose=True):
     '''
     Train a given model
 
@@ -103,6 +103,8 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay
         A tuple containing the training and validation loss history
     '''
     loss = torch.nn.MSELoss()
+    mae = 0
+    optional_loss = torch.nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     train_mse_history = [] # store the training loss history
@@ -115,7 +117,7 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay
         for x, y in train_loader:
             optimizer.zero_grad() # zero the gradients
 
-            out = model(x, func)
+            out = model(x)
             train_loss = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
 
             train_loss.backward()
@@ -128,8 +130,10 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay
         model.eval() # set to evaluation mode
         with torch.no_grad(): # no need to compute gradients (more efficient)
             for x, y in val_loader:
-                out = model(x, func)
+                out = model(x)
                 val_mse = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
+                val_mae = optional_loss(out, y.unsqueeze(1))
+                mae = val_mae.item()
         
         train_mse_history.append(train_mse)
         val_mse_history.append(val_mse.item())
@@ -137,7 +141,7 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay
         if verbose:
             print(f'Epoch {epoch} - Train MSE: {train_mse} - Val MSE: {val_mse.item()}')
 
-    return train_mse_history, val_mse_history
+    return train_mse_history, val_mse_history, mae
 
 class GridSearch:
     '''
@@ -193,10 +197,10 @@ class GridSearch:
             val_loader = data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
             
             tdnn = TDNN(window_size=config['window_size'], hidden_size=config['hidden_size'], output_size=1).to(device)
-            train_h, val_h = train_tdnn(tdnn, train_loader, val_loader, 
-                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], func=config['func'], verbose=False)
+            train_h, val_h, mae = train_tdnn(tdnn, train_loader, val_loader, 
+                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], verbose=False)
             
-            model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1], 'func': config['func'].__name__}
+            model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1], 'val_mae': mae}
             if verbose: 
                 print(f'Configuration {i}')
         
