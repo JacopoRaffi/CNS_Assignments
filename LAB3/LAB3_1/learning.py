@@ -38,9 +38,9 @@ class TDNNDataset(data.Dataset):
         -------
         return: -
         '''
-        # load entire dataset in memory (WARNING: only because the dataset is small)
-        self.x = x.to(device)
-        self.y = y.to(device)
+        
+        self.x = x
+        self.y = y
         self.window_size = window_size
 
     def __len__(self):
@@ -163,7 +163,7 @@ class GridSearch:
         '''
         self.all_config = [dict(zip(hyperparameters.keys(), config)) for config in itertools.product(*hyperparameters.values())]
 
-    def tdnn_grid_search(self, train_X, train_Y, val_X, val_Y):
+    def tdnn_grid_search(self, train_X, train_Y, val_X, val_Y, verbose=False):
         '''
         Perform grid search to find the best hyperparameters for a TDNN
 
@@ -183,19 +183,22 @@ class GridSearch:
         return: dict
             Return all the configurations with the corresponding training and validation MSE
         '''
-        train_dataset = TDNNDataset(train_X, train_Y, window_size=config['window_size'])
-        val_dataset = TDNNDataset(val_X, val_Y, window_size=config['window_size'])
-        train_loader = data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=False)
-        val_loader = data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
         
         model_selection_history = {} # contains all the configurations with the corresponding training and validation MSE (useful for model selection)
 
         for i, config in enumerate(self.all_config):
-            tdnn = TDNN(window_size=config['window_size'], hidden_size=config['hidden_size'], output_size=1)
+            train_dataset = TDNNDataset(train_X, train_Y, window_size=config['window_size'])
+            val_dataset = TDNNDataset(val_X, val_Y, window_size=config['window_size'])
+            train_loader = data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=False)
+            val_loader = data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
+            
+            tdnn = TDNN(window_size=config['window_size'], hidden_size=config['hidden_size'], output_size=1).to(device)
             train_h, val_h = train_tdnn(tdnn, train_loader, val_loader, 
-                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'])
+                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], verbose=False)
             
             model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1]}
+            if verbose: 
+                print(f'Configuration {i}')
         
         return model_selection_history
 
