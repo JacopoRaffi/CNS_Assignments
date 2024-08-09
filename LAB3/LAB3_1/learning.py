@@ -5,7 +5,7 @@ import torch.optim as optim
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-class SequenceDataset(data.Dataset):
+class TDNNDataset(data.Dataset):
     '''
     Custom Dataset class for sequences (when using a TDNN)
 
@@ -137,3 +137,4 @@ def train_model(model, train_loader, val_loader, lr, weight_decay, epochs, verbo
             print(f'Epoch {epoch} - Train MSE: {train_mse} - Val MSE: {val_mse.item()} - Val MAE: {val_mae.item()}')
 
     return train_mse_history, val_mse_history
+
