@@ -76,7 +76,7 @@ class TDNNDataset(data.Dataset):
             return self.x[idx - self.window_size + 1:idx + 1], self.y[idx] # no need to apply padding
         
 
-def train_tdnn(model, train_loader, val_loader, lr, weight_decay, epochs, verbose=True):
+def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay:float, epochs:int, func:callable, verbose=True):
     '''
     Train a given model
 
@@ -115,7 +115,7 @@ def train_tdnn(model, train_loader, val_loader, lr, weight_decay, epochs, verbos
         for x, y in train_loader:
             optimizer.zero_grad() # zero the gradients
 
-            out = model(x)
+            out = model(x, func)
             train_loss = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
 
             train_loss.backward()
@@ -128,7 +128,7 @@ def train_tdnn(model, train_loader, val_loader, lr, weight_decay, epochs, verbos
         model.eval() # set to evaluation mode
         with torch.no_grad(): # no need to compute gradients (more efficient)
             for x, y in val_loader:
-                out = model(x)
+                out = model(x, func)
                 val_mse = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
         
         train_mse_history.append(train_mse)
@@ -194,9 +194,9 @@ class GridSearch:
             
             tdnn = TDNN(window_size=config['window_size'], hidden_size=config['hidden_size'], output_size=1).to(device)
             train_h, val_h = train_tdnn(tdnn, train_loader, val_loader, 
-                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], verbose=False)
+                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], func=config['func'], verbose=False)
             
-            model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1]}
+            model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1], 'func': config['func'].__name__}
             if verbose: 
                 print(f'Configuration {i}')
         

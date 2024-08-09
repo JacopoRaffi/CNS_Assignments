@@ -34,7 +34,7 @@ class TDNN(nn.Module):
         self.hidden_layer = nn.Linear(window_size, hidden_size)
         self.output_layer = nn.Linear(hidden_size, output_size)
 
-    def forward(self, x:torch.Tensor):
+    def forward(self, x:torch.Tensor, func:callable = F.tanh):
         '''
         Forward pass of the model
 
@@ -49,7 +49,7 @@ class TDNN(nn.Module):
             The output tensor of shape (batch_size, output_size)
         '''
         x = self.hidden_layer(x)
-        x = F.tanh(x)
+        x = func(x) 
         x = self.output_layer(x)
         
         return x
