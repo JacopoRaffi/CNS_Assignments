@@ -75,15 +75,71 @@ class TDNNDataset(data.Dataset):
         else:
             return self.x[idx - self.window_size + 1:idx + 1], self.y[idx] # no need to apply padding
         
+class RNNDataset(data.Dataset):
+    '''
+    Custom Dataset class for sequences (when using a RNN)
 
-def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr:float, weight_decay:float, epochs:int, verbose=True):
+    Atrributes:
+    ----------
+    x: torch.Tensor
+        The input sequence
+    y: torch.Tensor
+        The target sequence
+    '''
+    def __init__(self, x, y):
+        '''
+        Initialize the dataset
+
+        Parameters:
+        ----------
+        x: torch.Tensor
+            The input sequence
+        y: torch.Tensor
+            The target sequence
+
+        Returns:
+        -------
+        return: -
+        '''
+        
+        self.x = x
+        self.y = y
+
+    def __len__(self):
+        '''
+        Return the length of the dataset
+
+        Returns:
+        -------
+        return: int
+            The length of the dataset
+        '''
+        return len(self.x)
+
+    def __getitem__(self, idx):
+        '''
+        Get an item from the dataset
+
+        Parameters:
+        ----------
+        idx: int
+            The index of the item to retrieve
+
+        Returns:
+        -------
+        return: tuple
+            A tuple containing the input sequence and the target value
+        '''
+        return self.x[idx], self.y[idx]
+        
+def train_tdnn(model:TDNN, train_loader, val_loader, lr:float, weight_decay:float, epochs:int, verbose=True):
     '''
     Train a given model
 
     Parameters:
     ----------
     model: torch.nn.Module
-        The model to train
+        The TDNN model to train
     train_loader: torch.utils.data.DataLoader
         The training data loader
     val_loader: torch.utils.data.DataLoader
@@ -111,7 +167,7 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr:float, weight
     for epoch in range(epochs):
 
         model.train() # set to training mode
-        train_mse = 0
+        running_mse= 0
         for x, y in train_loader:
             optimizer.zero_grad() # zero the gradients
 
@@ -121,9 +177,9 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr:float, weight
             train_loss.backward()
             optimizer.step()
 
-            train_mse += train_loss.item()
+            running_mse+= train_loss.item()
         
-        train_mse /= len(train_loader) # average the loss over the minibatches (number of minbatch given by 'len(train_loader)')
+        running_mse/= len(train_loader) # average the loss over the minibatches (number of minbatch given by 'len(train_loader)')
         
         model.eval() # set to evaluation mode
         with torch.no_grad(): # no need to compute gradients (more efficient)
@@ -131,11 +187,82 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr:float, weight
                 out = model(x)
                 val_mse = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
         
-        train_mse_history.append(train_mse)
+        train_mse_history.append(running_mse)
         val_mse_history.append(val_mse.item())
 
         if verbose:
-            print(f'Epoch {epoch} - Train MSE: {train_mse} - Val MSE: {val_mse.item()}')
+            print(f'Epoch {epoch} - Train MSE: {running_mse} - Val MSE: {val_mse.item()}')
+
+    return train_mse_history, val_mse_history
+
+def train_rnn(model:VanillaRNN, train_loader, val_loader, lr:float, weight_decay:float, epochs:int, clip_trheshold:float, verbose=True):
+    '''
+    Train a given model
+
+    Parameters:
+    ----------
+    model: torch.nn.Module
+        The RNN model to train
+    train_loader: torch.utils.data.DataLoader
+        The training data loader
+    val_loader: torch.utils.data.DataLoader
+        The validation data loader
+    lr: float
+        The learning rate
+    weight_decay: float
+        The weight decay (L2 regularization or Tikhonov Regularization)
+    epochs: int
+        The number of epochs
+    verbose: bool
+        Whether to print the training progress
+
+    Returns:
+    -------
+    return: tuple
+        A tuple containing the training and validation loss history
+    '''
+    loss = torch.nn.MSELoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+
+    train_mse_history = [] # store the training loss history
+    val_mse_history = [] # store the validation loss history
+
+    for epoch in range(epochs):
+        h_last = None
+        running_mse= 0
+
+        model.train() # set to training mode
+        for x, y in train_loader:
+            optimizer.zero_grad()
+            x = x.unsqueeze(1)
+            out, h_last = model(x, h_last)
+            h_last = h_last.detach() 
+            train_loss = loss(out, y.unsqueeze(1)) 
+
+            train_loss.backward()
+            if clip_trheshold > 0: # apply gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_trheshold)
+            
+            optimizer.step()
+
+            running_mse += train_loss.item()
+        
+        running_mse/= len(train_loader) # average the loss over the minibatches (number of minbatch given by 'len(train_loader)')
+
+        model.eval() # set to evaluation mode
+        with torch.no_grad():
+            for x, y in val_loader:
+                x = x.unsqueeze(1)
+                out, _ = model(x, h_last)
+                val_mse = loss(out, y.unsqueeze(1)) 
+                
+
+        train_mse_history.append(running_mse)
+        val_mse_history.append(val_mse.item())
+
+
+        if verbose:
+            print(f'Epoch {epoch} - Train MSE: {running_mse} - Val MSE: {val_mse.item()}')
 
     return train_mse_history, val_mse_history
 
