@@ -76,7 +76,7 @@ class TDNNDataset(data.Dataset):
             return self.x[idx - self.window_size + 1:idx + 1], self.y[idx] # no need to apply padding
         
 
-def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay:float, epochs:int, verbose=True):
+def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr:float, weight_decay:float, epochs:int, verbose=True):
     '''
     Train a given model
 
@@ -103,7 +103,6 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay
         A tuple containing the training and validation loss history
     '''
     loss = torch.nn.MSELoss()
-    optional_loss = torch.nn.L1Loss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     train_mse_history = [] # store the training loss history
@@ -131,7 +130,6 @@ def train_tdnn(model:torch.nn.Module, train_loader, val_loader, lr, weight_decay
             for x, y in val_loader:
                 out = model(x)
                 val_mse = loss(out, y.unsqueeze(1)) # unsqueeze necessary to have the same size for 'out' and 'y' (it doesn't affect the loss)
-                val_mae = optional_loss(out, y.unsqueeze(1))
         
         train_mse_history.append(train_mse)
         val_mse_history.append(val_mse.item())
@@ -187,7 +185,7 @@ class GridSearch:
         '''
         
         model_selection_history = {} # contains all the configurations with the corresponding training and validation MSE (useful for model selection)
-
+        
         for i, config in enumerate(self.all_config):
             train_dataset = TDNNDataset(train_X, train_Y, window_size=config['window_size'])
             val_dataset = TDNNDataset(val_X, val_Y, window_size=config['window_size'])
