@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Reservoir(nn.Module):
-    def __init__(self, input_size:int, hidden_size:int, omhega_in:float, omhega_b:float, rho:float):
+    def __init__(self, input_size:int, hidden_size:int, omhega_in:float, omhega_b:float, rho:float, density:float = 1):
         '''
         Initialize Echo State Network (ESN) with the given parameters
 
