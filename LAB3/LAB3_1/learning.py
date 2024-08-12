@@ -195,7 +195,7 @@ def train_tdnn(model:TDNN, train_loader, val_loader, lr:float, weight_decay:floa
 
     return train_mse_history, val_mse_history
 
-def train_rnn(model:VanillaRNN, train_loader, val_loader, lr:float, weight_decay:float, epochs:int, clip_trheshold:float, verbose=True):
+def train_rnn(model:VanillaRNN, train_loader, val_loader, lr:float, weight_decay:float, epochs:int, clip_threshold:float, verbose=True):
     '''
     Train a given model
 
@@ -240,8 +240,8 @@ def train_rnn(model:VanillaRNN, train_loader, val_loader, lr:float, weight_decay
             train_loss = loss(out, y.unsqueeze(1)) 
 
             train_loss.backward()
-            if clip_trheshold > 0: # apply gradient clipping
-                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_trheshold)
+            if clip_threshold > 0: # apply gradient clipping
+                torch.nn.utils.clip_grad_norm_(model.parameters(), clip_threshold)
             
             optimizer.step()
 
@@ -354,9 +354,9 @@ class GridSearch:
             Return all the configurations with the corresponding training and validation MSE
         '''
         model_selection_history = {} # contains all the configurations with the corresponding training and validation MSE (useful for model selection)
-        train_dataset = TDNNDataset(train_X, train_Y)
+        train_dataset = RNNDataset(train_X, train_Y)
         
-        val_dataset = TDNNDataset(val_X, val_Y)
+        val_dataset = RNNDataset(val_X, val_Y)
         val_loader = data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
 
         for i, config in enumerate(self.all_config):
@@ -365,7 +365,7 @@ class GridSearch:
             rnn = VanillaRNN(input_size=1, hidden_size=config['hidden_size'], output_size=1).to(device)
 
             train_h, val_h = train_rnn(rnn, train_loader, val_loader, 
-                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], clip_trheshold=config['clip_trheshold'], verbose=False)
+                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], clip_threshold=config['clip_threshold'], verbose=False)
             
             model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1]}
             if verbose:
