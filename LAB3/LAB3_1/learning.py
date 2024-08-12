@@ -250,7 +250,7 @@ def train_rnn(model:VanillaRNN, train_loader, val_loader, lr:float, weight_decay
         running_mse/= len(train_loader) # average the loss over the minibatches (number of minbatch given by 'len(train_loader)')
 
         model.eval() # set to evaluation mode
-        with torch.no_grad():
+        with torch.no_grad(): # no need to compute gradients (more efficient)
             for x, y in val_loader:
                 x = x.unsqueeze(1)
                 out, _ = model(x, h_last)
@@ -304,6 +304,8 @@ class GridSearch:
             Validation input data
         val_Y: torch.Tensor
             Validation target data
+        verbose: bool
+            Whether to print the model selection progress
 
         Returns:
         -------
@@ -329,5 +331,45 @@ class GridSearch:
         
         return model_selection_history
 
-    def rnn_grid_search(self):
-        pass
+    def rnn_grid_search(self, train_X, train_Y, val_X, val_Y, verbose=False):
+        '''
+        Perform grid search to find the best hyperparameters for a VanillaRNN
+
+        Parameters:
+        ----------
+        train_X: torch.Tensor
+            Training input data
+        train_Y: torch.Tensor
+            Training target data
+        val_X: torch.Tensor
+            Validation input data
+        val_Y: torch.Tensor
+            Validation target data
+        verbose: bool
+            Whether to print the model selection progress
+
+        Returns:
+        -------
+        return: dict
+            Return all the configurations with the corresponding training and validation MSE
+        '''
+        model_selection_history = {} # contains all the configurations with the corresponding training and validation MSE (useful for model selection)
+        train_dataset = TDNNDataset(train_X, train_Y)
+        
+        val_dataset = TDNNDataset(val_X, val_Y)
+        val_loader = data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
+
+        for i, config in enumerate(self.all_config):
+            train_loader = data.DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=False)
+
+            rnn = VanillaRNN(input_size=1, hidden_size=config['hidden_size'], output_size=1).to(device)
+
+            train_h, val_h = train_rnn(rnn, train_loader, val_loader, 
+                                        lr=config['lr'], weight_decay=config['weight_decay'], epochs=config['epochs'], clip_trheshold=config['clip_trheshold'], verbose=False)
+            
+            model_selection_history[f'config_{i}'] = {**config, 'train_mse': train_h[-1], 'val_mse': val_h[-1]}
+            if verbose:
+                print(f'Configuration {i}')
+
+        return model_selection_history
+        
