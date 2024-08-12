@@ -60,11 +60,12 @@ class Reservoir(nn.Module):
             Output tensor
         '''
 
-        h = torch.zeros(self.hidden_size) if h_init is None else h_init.copy()
+        timesteps, batch_size, _ = input.shape
+        h = torch.zeros(batch_size, self.hidden_size) if h_init is None else h_init.copy()
         states = []
 
-        for x in input:
-            h = F.linear(x, self.W_in, self.bias) + F.linear(h, self.W_h)
+        for t in range(timesteps):
+            h = F.linear(input[t], self.W_in, self.bias) + F.linear(h, self.W_h)
             h = F.tanh(h)
             states.append(h)
 
