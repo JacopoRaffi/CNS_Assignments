@@ -36,7 +36,7 @@ class ESN(nn.Module):
         W_h = nn.init.uniform_(torch.empty(hidden_size, hidden_size), -1, 1)
         W_h = W_h.div_(torch.linalg.eigvals(W_h).abs().max()).mul_(rho).float() # use in-place operations to save memory
 
-        self.W = nn.Parameter(W_h, requires_grad=False)
+        self.W_h = nn.Parameter(W_h, requires_grad=False)
 
         
 
