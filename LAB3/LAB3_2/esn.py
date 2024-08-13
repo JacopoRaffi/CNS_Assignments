@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.linear_model import Ridge
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -73,8 +74,32 @@ class Reservoir(nn.Module):
 
             
 
-class ESN(nn.Module):
-    pass
+class RegressorESN(nn.Module):
+    def __init__(self, input_size:int, hidden_size:int, output_size:int, ridge_regression:float, 
+                 omhega_in:float, omhega_b:float, rho:float, density:float = 1):
+        
+        super(RegressorESN, self).__init__()
+        
+        self.reservoir = Reservoir(input_size, hidden_size, omhega_in, omhega_b, rho, density)
+        self.readout = Ridge(alpha=ridge_regression) # linear ridge regression of scikit-learn
+        self.states = None
+    
+    def fit(self, input:torch.Tensor, target:torch.Tensor, washout:int = 0):
+        states = self.reservoir(input, h_init=None, washout=washout)
+        states = states.squeeze(1)
+        self.readout.fit(states, target)
+
+        self.states = states
+        return states[-1] # return last state
+
+    @torch.no_grad()
+    def forward(self, input:torch.Tensor, h_init:torch.Tensor, washout:int = 0):
+        if self.training: # avoid to recompute states
+            states = self.states # states already computed during fitting
+        else:
+            states = self.reservoir(input, h_init=h_init, washout=washout).squeeze(1)
+
+        return self.readout.predict(states)
             
 
         
