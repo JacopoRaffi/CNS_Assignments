@@ -48,7 +48,7 @@ class Reservoir(nn.Module):
         Parameters:
         ----------
         input: torch.Tensor
-            Input tensor. Input of Shape (L, input size) or (L, N, input size) if input is batched 
+            Input tensor. Input of Shape (L, N, input size)
             (L is the length of the sequence, N is the batch size)
         h_init: torch.Tensor
             Initial hidden state (set to zeros if None)
@@ -75,8 +75,39 @@ class Reservoir(nn.Module):
             
 
 class RegressorESN(nn.Module):
-    def __init__(self, input_size:int, hidden_size:int, output_size:int, ridge_regression:float, 
+    '''
+    Echo State Network (ESN) with linear readout for regression task
+
+    Attributes:
+    ----------
+    reservoir: Reservoir
+        Reservoir layer of the ESN
+    readout: Ridge
+        Linear ridge regression of scikit-learn
+    states: torch.Tensor
+        States of the reservoir layer (used to avoid recomputing states during training)
+    '''
+
+    def __init__(self, input_size:int, hidden_size:int, ridge_regression:float, 
                  omhega_in:float, omhega_b:float, rho:float, density:float = 1):
+        '''
+        Initialize ESN with the given parameters
+
+        Parameters:
+        ----------
+        input_size: int
+            Size of the input
+        hidden_size: int
+            Size of the hidden layer
+        ridge_regression: float
+            Regularization parameter for ridge regression
+        omhega_in: float
+            Input scaling for Reservoir layer
+        omhega_b: float
+            Bias scaling for Reservoir layer
+        rho: float
+            Desired Spectral radius of the hidden reservoir layer weight matrix
+        '''
         
         super(RegressorESN, self).__init__()
         
@@ -85,6 +116,24 @@ class RegressorESN(nn.Module):
         self.states = None
     
     def fit(self, input:torch.Tensor, target:torch.Tensor, washout:int = 0):
+        '''
+        Fit the ESN to the given input and target
+
+        Parameters:
+        ----------
+        input: torch.Tensor
+            Input tensor. Input of Shape (L, N, input size)
+            (L is the length of the sequence, N is the batch size)
+        target: torch.Tensor
+            Target tensor
+        washout: int
+            Number of time steps to ignore
+
+        Returns:
+        -------
+        return: torch.Tensor
+            Last state of the Reservoir layer
+        '''
         states = self.reservoir(input, h_init=None, washout=washout)
         states = states.squeeze(1)
         self.readout.fit(states, target)
@@ -94,12 +143,30 @@ class RegressorESN(nn.Module):
 
     @torch.no_grad()
     def forward(self, input:torch.Tensor, h_init:torch.Tensor, washout:int = 0):
+        '''
+        Forward pass through the ESN
+
+        Parameters:
+        ----------
+        input: torch.Tensor
+            Input tensor. Input of Shape (L, N, input size)
+            (L is the length of the sequence, N is the batch size)
+        h_init: torch.Tensor
+            Initial hidden state (set to zeros if None)
+        washout: int
+            Number of time steps to ignore
+
+        Returns:
+        -------
+        return: torch.Tensor
+            Output tensor
+        '''
         if self.training: # avoid to recompute states
             states = self.states # states already computed during fitting
         else:
             states = self.reservoir(input, h_init=h_init, washout=washout).squeeze(1)
 
-        return self.readout.predict(states)
+        return torch.from_numpy(self.readout.predict(states))
             
 
         
