@@ -64,7 +64,7 @@ class Reservoir(nn.Module):
         states = []
 
         for t in range(timesteps):
-            h = F.linear(input[t], self.W_in, self.bias) + F.linear(h, self.W_h)
+            h = F.linear(input[t], self.W_in, self.bias) + F.linear(h, self.W_h) # (W_in * x + bias) + W_h * h
             h = F.tanh(h)
             states.append(h)
 

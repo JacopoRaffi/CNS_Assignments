@@ -4,6 +4,12 @@ import statistics as st
 
 from esn import *
 
+import itertools
+import torch
+import statistics as st
+
+from esn import *
+
 def grid_search(hyperparameters:dict, train_x, train_y, val_x, val_y, n_iter:int = 5, verbose:bool = False):
     all_config = [dict(zip(hyperparameters.keys(), config)) for config in itertools.product(*hyperparameters.values())]
 
@@ -23,11 +29,11 @@ def grid_search(hyperparameters:dict, train_x, train_y, val_x, val_y, n_iter:int
             esn.train()        
             h_last = esn.fit(train_x, train_y, washout)
             train_pred = esn(train_x, None)
-            train_mse.append(mse(train_pred.unsqueeze(0), train_y.unsqueeze(0)).item()) # unsqueeze necessary for MSELoss torch function to work (it doesn't affect the loss)
+            train_mse.append(mse(train_pred, train_y).item())
             
             esn.eval()
             val_pred = esn(val_x, h_init=h_last)
-            val_mse.append(mse(val_pred.unsqueeze(0), val_y.unsqueeze(0)).item())
+            val_mse.append(mse(val_pred, val_y).item())
 
         model_selection_history[f'config_{i}'] = {**config, 
                                                   'train_mse_mean': st.mean(train_mse), 'train_mse_var': st.variance(train_mse), 
