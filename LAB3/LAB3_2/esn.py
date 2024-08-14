@@ -62,7 +62,7 @@ class Reservoir(nn.Module):
         '''
 
         timesteps, batch_size, _ = input.shape
-        h = torch.zeros(batch_size, self.hidden_size) if h_init is None else h_init.copy()
+        h = torch.zeros(batch_size, self.hidden_size) if h_init is None else h_init
         states = []
 
         for t in range(timesteps):
