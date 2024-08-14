@@ -133,7 +133,7 @@ class RegressorESN(nn.Module):
             Last state of the Reservoir layer
         '''
         self.states = self.reservoir(input, h_init=None).squeeze(1)
-        self.readout.fit(self.states[washout:, :], target[washout:])
+        self.readout.fit(self.states[washout:], target[washout:])
 
         return self.states[-1] # return last state
 
