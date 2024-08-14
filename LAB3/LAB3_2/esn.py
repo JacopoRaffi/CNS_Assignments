@@ -29,6 +29,7 @@ class Reservoir(nn.Module):
         super(Reservoir, self).__init__()
 
         self.input_scaling = nn.Parameter(torch.tensor(omhega_in), requires_grad=False)
+        self.bias_scaling = nn.Parameter(torch.tensor(omhega_b), requires_grad=False)
         self.rho = nn.Parameter(torch.tensor(rho), requires_grad=False)
         self.hidden_size = nn.Parameter(torch.tensor(hidden_size), requires_grad=False)
 
@@ -36,7 +37,7 @@ class Reservoir(nn.Module):
         self.bias = nn.Parameter(nn.init.uniform_(torch.empty(hidden_size), -omhega_b, omhega_b), requires_grad=False)
 
         W_h = nn.init.uniform_(torch.empty(hidden_size, hidden_size), -1, 1)
-        W_h = W_h.div_(torch.linalg.eigvals(W_h).abs().max()).mul_(rho).float() # use in-place operations (div_, mul_) to save memory
+        W_h = W_h.div_(torch.linalg.eigvals(W_h).abs().max()).mul_(rho) # use in-place operations (div_, mul_) to save memory
 
         self.W_h = nn.Parameter(W_h, requires_grad=False)
 
