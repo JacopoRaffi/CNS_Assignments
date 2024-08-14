@@ -41,7 +41,7 @@ class Reservoir(nn.Module):
         self.W_h = nn.Parameter(W_h, requires_grad=False)
 
     @torch.no_grad()
-    def forward(self, input:torch.Tensor, h_init:torch.Tensor, washout:int = 0) -> torch.Tensor:
+    def forward(self, input:torch.Tensor, h_init:torch.Tensor) -> torch.Tensor:
         '''
         Forward pass through the ESN
 
@@ -52,8 +52,6 @@ class Reservoir(nn.Module):
             (L is the length of the sequence, N is the batch size)
         h_init: torch.Tensor
             Initial hidden state (set to zeros if None)
-        washout: int
-            Number of time steps to ignore
 
         Returns:
         -------
@@ -70,7 +68,7 @@ class Reservoir(nn.Module):
             h = F.tanh(h)
             states.append(h)
 
-        return torch.stack(states[washout:], dim=0) 
+        return torch.stack(states, dim=0) 
 
             
 
@@ -134,15 +132,13 @@ class RegressorESN(nn.Module):
         return: torch.Tensor
             Last state of the Reservoir layer
         '''
-        states = self.reservoir(input, h_init=None, washout=washout)
-        states = states.squeeze(1)
-        self.readout.fit(states, target)
+        self.states = self.reservoir(input, h_init=None).squeeze(1)
+        self.readout.fit(self.states[washout:, :], target[washout:])
 
-        self.states = states
-        return states[-1] # return last state
+        return self.states[-1] # return last state
 
     @torch.no_grad()
-    def forward(self, input:torch.Tensor, h_init:torch.Tensor, washout:int = 0):
+    def forward(self, input:torch.Tensor, h_init:torch.Tensor):
         '''
         Forward pass through the ESN
 
@@ -164,7 +160,7 @@ class RegressorESN(nn.Module):
         if self.training: # avoid to recompute states
             states = self.states # states already computed during fitting
         else:
-            states = self.reservoir(input, h_init=h_init, washout=washout).squeeze(1)
+            states = self.reservoir(input, h_init=h_init).squeeze(1)
 
         return torch.from_numpy(self.readout.predict(states))
             

@@ -15,12 +15,13 @@ def grid_search(hyperparameters:dict, train_x, train_y, val_x, val_y, n_iter:int
 
         train_mse = []
         val_mse = []
+        washout = config['washout']
         for _ in range(n_iter):
             esn = RegressorESN(input_size=input_size, hidden_size=config['hidden_size'], ridge_regression=config['ridge_regression'],
                             omhega_in=config['omhega_in'], omhega_b=config['omhega_b'], rho=config['rho'], density=1)
 
             esn.train()        
-            h_last = esn.fit(train_x, train_y)
+            h_last = esn.fit(train_x, train_y, washout)
             train_pred = esn(train_x, None)
             train_mse.append(mse(train_pred.unsqueeze(0), train_y.unsqueeze(0)).item()) # unsqueeze necessary for MSELoss torch function to work (it doesn't affect the loss)
             
