@@ -65,7 +65,7 @@ class Reservoir(nn.Module):
         states = []
 
         for t in range(timesteps):
-            h = F.tanh(F.linear(input=input[t], weight=self.W_in) + F.linear(input=h, weight=self.W_h, bias=self.bias)) # (W_in * x + bias) + W_h * h
+            h = F.tanh(F.linear(input=input[t], weight=self.W_in) + F.linear(input=h, weight=self.W_h, bias=self.bias)) # tanh(W_in * x + W_h * h + bias)
             states.append(h)
 
         return torch.stack(states, dim=0) 
