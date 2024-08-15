@@ -65,8 +65,7 @@ class Reservoir(nn.Module):
         states = []
 
         for t in range(timesteps):
-            h = F.linear(input[t], self.W_in, self.bias) + F.linear(h, self.W_h) # (W_in * x + bias) + W_h * h
-            h = F.tanh(h)
+            h = F.tanh(F.linear(input=input[t], weight=self.W_in) + F.linear(input=h, weight=self.W_h, bias=self.bias)) # (W_in * x + bias) + W_h * h
             states.append(h)
 
         return torch.stack(states, dim=0) 
@@ -110,7 +109,7 @@ class RegressorESN(nn.Module):
         
         super(RegressorESN, self).__init__()
         
-        self.reservoir = Reservoir(input_size, hidden_size, omhega_in, omhega_b, rho, density)
+        self.reservoir = Reservoir(input_size=input_size, hidden_size=hidden_size, omhega_in=omhega_in, omhega_b=omhega_b, rho=rho, density=density)
         self.readout = Ridge(alpha=ridge_regression) # linear ridge regression of scikit-learn
         self.states = None
     
@@ -164,7 +163,3 @@ class RegressorESN(nn.Module):
             states = self.reservoir(input, h_init=h_init).squeeze(1)
 
         return torch.from_numpy(self.readout.predict(states))
-            
-
-        
-
