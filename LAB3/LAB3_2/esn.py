@@ -167,3 +167,32 @@ class RegressorESN(nn.Module):
             states = self.reservoir(input, h_init=h_init).squeeze(1)
 
         return torch.from_numpy(self.readout.predict(states))
+    
+
+class ClassifierESN(nn.Module):
+    def __init__(self, input_size:int, hidden_size:int, n_classes:int, ridge_regression:float, 
+                 omhega_in:float, omhega_b:float, rho:float):
+        '''
+        Initialize ESN with the given parameters
+
+        Parameters:
+        ----------
+        input_size: int
+            Size of the input
+        hidden_size: int
+            Size of the hidden layer
+        n_classes: int
+            Number of classes
+        ridge_regression: float
+            Regularization parameter for ridge regression
+        omhega_in: float
+            Input scaling for Reservoir layer
+        omhega_b: float
+            Bias scaling for Reservoir layer
+        rho: float
+            Desired Spectral radius of the hidden reservoir layer weight matrix
+        '''
+        super(ClassifierESN, self).__init__()
+        
+        self.reservoir = Reservoir(input_size=input_size, hidden_size=hidden_size, omhega_in=omhega_in, omhega_b=omhega_b, rho=rho)
+        self.readout = Ridge(alpha=ridge_regression)
