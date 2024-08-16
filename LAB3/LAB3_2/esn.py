@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Reservoir(nn.Module):
-    def __init__(self, input_size:int, hidden_size:int, omhega_in:float, omhega_b:float, rho:float, density:float = 1):
+    def __init__(self, input_size:int, hidden_size:int, omhega_in:float, omhega_b:float, rho:float):
         '''
         Initialize Echo State Network (ESN) with the given parameters
 
@@ -42,7 +42,7 @@ class Reservoir(nn.Module):
         self.W_h = nn.Parameter(W_h, requires_grad=False)
 
     @torch.no_grad()
-    def forward(self, input:torch.Tensor, h_init:torch.Tensor) -> torch.Tensor:
+    def forward(self, input:torch.Tensor, h_init:torch.Tensor, alpha:float = 1.) -> torch.Tensor:
         '''
         Forward pass through the ESN
 
@@ -53,6 +53,8 @@ class Reservoir(nn.Module):
             (L is the length of the sequence, N is the batch size)
         h_init: torch.Tensor
             Initial hidden state (set to zeros if None)
+        alpha: float
+            Leaking rate
 
         Returns:
         -------
@@ -65,7 +67,7 @@ class Reservoir(nn.Module):
         states = []
 
         for t in range(timesteps):
-            h = F.tanh(F.linear(input=input[t], weight=self.W_in) + F.linear(input=h, weight=self.W_h, bias=self.bias)) # tanh(W_in * x + W_h * h + bias)
+            h = alpha * F.tanh(F.linear(input=input[t], weight=self.W_in) + F.linear(input=h, weight=self.W_h, bias=self.bias)) + (1-alpha) * h # tanh(W_in * x + W_h * h + bias)
             states.append(h)
 
         return torch.stack(states, dim=0) 
@@ -87,7 +89,7 @@ class RegressorESN(nn.Module):
     '''
 
     def __init__(self, input_size:int, hidden_size:int, ridge_regression:float, 
-                 omhega_in:float, omhega_b:float, rho:float, density:float = 1):
+                 omhega_in:float, omhega_b:float, rho:float):
         '''
         Initialize ESN with the given parameters
 
@@ -109,11 +111,11 @@ class RegressorESN(nn.Module):
         
         super(RegressorESN, self).__init__()
         
-        self.reservoir = Reservoir(input_size=input_size, hidden_size=hidden_size, omhega_in=omhega_in, omhega_b=omhega_b, rho=rho, density=density)
+        self.reservoir = Reservoir(input_size=input_size, hidden_size=hidden_size, omhega_in=omhega_in, omhega_b=omhega_b, rho=rho)
         self.readout = Ridge(alpha=ridge_regression) # linear ridge regression of scikit-learn
         self.states = None
     
-    def fit(self, input:torch.Tensor, target:torch.Tensor, washout:int = 0):
+    def fit(self, input:torch.Tensor, target:torch.Tensor, washout:int = 0, alpha:float = 1):
         '''
         Fit the ESN to the given input and target
 
@@ -126,13 +128,15 @@ class RegressorESN(nn.Module):
             Target tensor
         washout: int
             Number of time steps to ignore
+        alpha: float
+            Leaking rate
 
         Returns:
         -------
         return: torch.Tensor
             Last state of the Reservoir layer
         '''
-        self.states = self.reservoir(input, h_init=None).squeeze(1)
+        self.states = self.reservoir(input, h_init=None, alpha=alpha).squeeze(1)
         self.readout.fit(self.states[washout:], target[washout:])
 
         return self.states[-1] # return last state
