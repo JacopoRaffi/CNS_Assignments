@@ -3,9 +3,9 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 
-class AntisymmetricRNN(nn.module):
+class AntisymmetricRNNCell(nn.module):
     def __init__(self, input_size, hidden_size, output_size, euler_step:float, diffusion:float):
-        super(AntisymmetricRNN, self).__init__()
+        super(AntisymmetricRNNCell, self).__init__()
         
         self.input_size = nn.Parameter(torch.tensor(input_size), requires_grad=False)
         self.hidden_size = nn.Parameter(torch.tensor(hidden_size), requires_grad=False)
@@ -22,10 +22,19 @@ class AntisymmetricRNN(nn.module):
         self.bias = nn.Parameter(nn.init.uniform_(torch.empty(hidden_size), -sqrt_k, sqrt_k), requires_grad=True)
 
     def forward(self, input:torch.Tensor, h_init:torch.Tensor):
-        
         h = torch.zeros(self.hidden_size) if h_init is None else h_init
+        diffusion_eye = torch.eye(self.hidden_size) * self.diffusion
 
+        h = h + self.euler_step * (F.linear(h, (self.W_h - self.W_h.T - diffusion_eye)) + F.linear(input, self.W_in, self.bias))
 
+        return h
 
 class TextGeneratorRNN(nn.Module):
-    pass
+    def __init__(self, input_size, hidden_size, output_size, euler_step:float, diffusion:float):
+        super(TextGeneratorRNN, self).__init__()
+
+        self.rnn = AntisymmetricRNNCell(input_size, hidden_size, output_size, euler_step, diffusion)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, input:torch.Tensor, h_init:torch.Tensor):
+        pass
