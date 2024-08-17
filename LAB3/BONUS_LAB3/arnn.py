@@ -3,7 +3,7 @@ import math
 import torch.nn as nn
 import torch.nn.functional as F
 
-class AntisymmetricRNN(nn.module): 
+class AntisymmetricRNN(nn.Module): 
     def __init__(self, input_size, hidden_size, euler_step:float, diffusion:float):
         super(AntisymmetricRNN, self).__init__()
         
@@ -22,7 +22,7 @@ class AntisymmetricRNN(nn.module):
 
     def forward(self, input:torch.Tensor, h_init:torch.Tensor):
         h = torch.zeros(self.hidden_size) if h_init is None else h_init
-        diffusion_eye = torch.eye(self.hidden_size) * self.diffusion
+        diffusion_eye = torch.eye(self.hidden_size).to(input.device) * self.diffusion
 
         for x in input:
             h = h + self.euler_step * (F.linear(h, (self.W_h - self.W_h.T - diffusion_eye)) + F.linear(x, self.W_in, self.bias))
@@ -37,11 +37,9 @@ class CharRNN(nn.Module):
         self.rnn = AntisymmetricRNN(embedding_dim, hidden_size, euler_step, diffusion)
         self.fc = nn.Linear(hidden_size, vocab_size)
 
-    def forward(self, input:torch.Tensor, h_init:torch.Tensor, temperature:float=1.0):
+    def forward(self, input:torch.Tensor, h_init:torch.Tensor):
         x = self.embedding(input)
-
         h = self.rnn(x, h_init)
         out = self.fc(h)
-        out = torch.div(out, temperature)
 
-        return F.softmax(out, dim=1)
+        return out
