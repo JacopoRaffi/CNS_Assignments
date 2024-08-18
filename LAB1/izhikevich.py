@@ -41,10 +41,15 @@ def Izhikevich(u:float, w:float,
             the time steps to consider during the iteration
         h: float
             time step (used for the Leap-Frog method)
+        f: callable
+            derivative of the membrane potential
+        g: callable
+            derivative of the recovery variable
 
         Returns
         -------
-        return: the membrane potential and recovery variable values over time
+        return: tuple 
+            the membrane potential and recovery variable values over time
 
     '''
 
@@ -84,8 +89,7 @@ def show_charts(u_values:list, w_values:list, I: numpy.array, time_steps:list):
 
         Returns
         -------
-        return: the membrane potential and recovery variable values over time
-
+        return: -
     '''
 
     fig, ax = plt.subplots(1,2, figsize=(20,5))
