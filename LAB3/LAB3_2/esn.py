@@ -89,7 +89,7 @@ class RegressorESN(nn.Module):
     '''
 
     def __init__(self, input_size:int, hidden_size:int, ridge_regression:float, 
-                 omhega_in:float, omhega_b:float, rho:float):
+                 omhega_in:float, omhega_b:float, rho:float, seq_len:int = 5000):
         '''
         Initialize ESN with the given parameters
 
@@ -113,7 +113,7 @@ class RegressorESN(nn.Module):
         
         self.reservoir = Reservoir(input_size=input_size, hidden_size=hidden_size, omhega_in=omhega_in, omhega_b=omhega_b, rho=rho)
         self.readout = Ridge(alpha=ridge_regression) # linear ridge regression of scikit-learn
-        self.states = None
+        self.states = nn.Parameter(torch.empty(seq_len, hidden_size), requires_grad=False) # save the states when load the model
     
     def fit(self, input:torch.Tensor, target:torch.Tensor, washout:int = 0, alpha:float = 1):
         '''
@@ -136,7 +136,7 @@ class RegressorESN(nn.Module):
         return: torch.Tensor
             Last state of the Reservoir layer
         '''
-        self.states = self.reservoir(input, h_init=None, alpha=alpha).squeeze(1)
+        self.states = nn.Parameter(self.reservoir(input, h_init=None, alpha=alpha).squeeze(1), requires_grad=False) 
         self.readout.fit(self.states[washout:], target[washout:])
 
         return self.states[-1] # return last state
@@ -166,33 +166,5 @@ class RegressorESN(nn.Module):
         else:
             states = self.reservoir(input, h_init=h_init).squeeze(1)
 
+        print(states.shape)
         return torch.from_numpy(self.readout.predict(states))
-    
-
-class ClassifierESN(nn.Module):
-    def __init__(self, input_size:int, hidden_size:int, n_classes:int, ridge_regression:float, 
-                 omhega_in:float, omhega_b:float, rho:float):
-        '''
-        Initialize ESN with the given parameters
-
-        Parameters:
-        ----------
-        input_size: int
-            Size of the input
-        hidden_size: int
-            Size of the hidden layer
-        n_classes: int
-            Number of classes
-        ridge_regression: float
-            Regularization parameter for ridge regression
-        omhega_in: float
-            Input scaling for Reservoir layer
-        omhega_b: float
-            Bias scaling for Reservoir layer
-        rho: float
-            Desired Spectral radius of the hidden reservoir layer weight matrix
-        '''
-        super(ClassifierESN, self).__init__()
-        
-        self.reservoir = Reservoir(input_size=input_size, hidden_size=hidden_size, omhega_in=omhega_in, omhega_b=omhega_b, rho=rho)
-        self.readout = Ridge(alpha=ridge_regression)

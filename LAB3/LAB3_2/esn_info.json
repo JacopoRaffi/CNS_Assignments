@@ -1,0 +1,17 @@
+{
+ "train_mse": 4.81691803804529e-07,
+ "val_mse": 9.57196111189914e-07,
+ "best_hyperparams": {
+  "hidden_size": 1024,
+  "ridge_regression": 1e-06,
+  "omhega_in": 0.6,
+  "omhega_b": 0.6,
+  "rho": 0.9,
+  "washout": 100,
+  "train_mse_mean": 4.81691803804529e-07,
+  "train_mse_var": 4.710095021652167e-16,
+  "val_mse_mean": 9.57196111189914e-07,
+  "val_mse_var": 4.673983106609467e-15
+ },
+ "test_mse": 9.260529766351163e-07
+}
