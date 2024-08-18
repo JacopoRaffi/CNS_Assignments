@@ -1,5 +1,50 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import json
+
+def save_to_json(filename:str, array_list:list):
+    '''
+    Save the data to a json file
+
+    Parameters
+    ---------
+    data: list
+        data to save
+    filename: str
+        name of the file
+
+    Returns
+    -------
+    return: -
+
+    '''
+
+    data = [arr.tolist() for arr in array_list]
+
+    with open(filename, 'w') as f:
+        json.dump(data, f)
+
+def load_from_json(filename:str):
+    '''
+    Load the data from a json file
+
+    Parameters
+    ---------
+    filename: str
+        name of the file
+
+    Returns
+    -------
+    return: list
+        data loaded from the file
+
+    '''
+
+    with open(filename, 'r') as f:
+        data = json.load(f)
+
+    return [np.array(arr) for arr in data]
+
 
 def eig_plot(data:np.ndarray, weights:np.ndarray):
     '''
