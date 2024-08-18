@@ -7,7 +7,7 @@ class CharRNN(nn.Module):
     '''
     CharRNN model
 
-    Attributes:
+    Attributes: 
     ------------
     rnn: nn.GRU
         GRU layer
