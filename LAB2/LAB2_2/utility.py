@@ -3,6 +3,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def distort_image(im, prop):
+    '''
+    Distorts an image by flipping a proportion of its elements
+
+    Parameters:
+    ----------
+    im: numpy.array
+        The image to be distorted
+    prop: float
+        The proportion of elements to be distorted. It must be a float between 0 and 1
+    
+    Returns:
+    -------
+    return: numpy.array
+        The distorted image
+    '''
     if prop < 0 or prop > 1:
         print('Out-of-bound proportion: going to default 0.05')
         prop = 0.05  # Default
@@ -22,12 +37,43 @@ def distort_image(im, prop):
     return im_flat.reshape(im.shape)
 
 def reshape_vector_to_image(csv_filename):
+    '''
+    Reshapes a vector to a 32x32 image.
+
+    Parameters:
+    ----------
+    csv_filename: str
+        The name of the csv file containing the vector to be reshaped
+    
+    Returns:
+    -------
+    return: numpy.array
+        The reshaped image
+    '''
     p_df = pd.read_csv(csv_filename, header=None)
     p = p_df.to_numpy().reshape(-1) # reshape to have a 1D array
     
     return p.reshape(32, 32).T # reshape to have a 32x32 image
 
 def plot_images(original_image, noisy_image, retrieved_image, noise):
+    '''
+    Plots the original image, the noisy image and the retrieved image side by side.
+
+    Parameters:
+    ----------
+    original_image: numpy.array
+        The original image
+    noisy_image: numpy.array
+        The noisy image
+    retrieved_image: numpy.array
+        The retrieved image by the hopfield network
+    noise: int
+        The noise level of the noisy image
+    
+    Returns:
+    -------
+    return: -
+    '''
     fig, axs = plt.subplots(1, 3, figsize=(15, 5))
 
     mse = np.mean(np.square(original_image.reshape(-1) - retrieved_image.reshape(-1))) # reshape(-1) gives a flatten view of the array
@@ -44,6 +90,22 @@ def plot_images(original_image, noisy_image, retrieved_image, noise):
     axs[2].set_title('Retrieved Image')
 
 def plot_history(energy_history:list, overlap_history:list, noise:int):
+    '''
+    Plots the history of the energy and overlap of the hopfield network.
+
+    Parameters:
+    ----------
+    energy_history: list
+        The history of the energy of the hopfield network
+    overlap_history: list
+        The history of the overlap of the hopfield network
+    noise: int
+        The noise level of the noisy image
+    
+    Returns:
+    -------
+    return: -
+    '''
     fig, axs = plt.subplots(1, 2, figsize=(15, 5))
 
     fig.suptitle(f'History of Energy and Overlap - Noise: {noise}')
