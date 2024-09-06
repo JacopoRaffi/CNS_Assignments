@@ -72,7 +72,7 @@ def Izhikevich(u:float, w:float,
 
     return u_values, w_values
 
-def show_charts(u_values:list, w_values:list, I: numpy.array, time_steps:list):
+def show_charts(u_values:list, w_values:list, I: numpy.array, time_steps:list, scale:float = 1.):
     '''
         simply shows the membrane dynamics and the phase portrait plots
 
@@ -93,7 +93,10 @@ def show_charts(u_values:list, w_values:list, I: numpy.array, time_steps:list):
     '''
 
     fig, ax = plt.subplots(1,2, figsize=(20,5))
-    I = [i - (abs(max(I) - min(u_values))) - 10  for i in I]
+    I = numpy.array(I)
+    max_i = max(scale*I)
+    min_u = min(u_values)
+    I = [i - (abs(max_i - min_u)) - 10  for i in scale*I]
 
     ax[0].set_xlabel("Time (t)")
     ax[0].set_ylabel("Membrane potential (u)")
