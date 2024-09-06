@@ -166,5 +166,4 @@ class RegressorESN(nn.Module):
         else:
             states = self.reservoir(input, h_init=h_init).squeeze(1)
 
-        print(states.shape)
         return torch.from_numpy(self.readout.predict(states))
