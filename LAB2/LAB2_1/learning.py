@@ -121,7 +121,7 @@ class HebbRule(ABCRule):
 
 class OjaRule(ABCRule):
     '''
-    Basic Hebb Learning Rule
+    Oja Learning Rule
 
     Attributes
     ----------
